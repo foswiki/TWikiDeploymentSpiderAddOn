@@ -22,12 +22,11 @@ use Carp;
 #    2 Discovers webs
 #    3 Writes found information information into a TWiki topic
 #
-# This script writes Wiki Topics of the form WwwDotSitenameDotOrg in the web Dep
-loymentSpider
+# This script writes Wiki Topics of the form WwwDotSitenameDotOrg in the web DeploymentSpider
 
-  # See facts_as_wikitopic for the output format
+# See facts_as_wikitopic for the output format
 
-  package TWikiSite;
+package TWikiSite;
 
 sub new {
     my $self = {};
@@ -115,8 +114,7 @@ sub facts_as_wikitopic {
 ----++ Vital facts
 | Site Address | ${[$self->site()]} |
 | Site Suffix | org |
-| Site Toolname | SiteName | (I'd use this as the site identifier except I don't
- know that everyone sets it) |
+| Site Toolname | SiteName | (I'd use this as the site identifier except I don't know that everyone sets it) |
 | Home | $self->home |
 | Founded | $self->founded() |
 | Version | $self->version() |
@@ -211,8 +209,7 @@ sub get_details {
     my $site = $users_url->netloc();
     eval { reg_site( $site, $users_url ); };
     print(
-        "---+ $site Error\n%RED%$! $@ \n (http://$site ($twiki_users) WebHome n
-ot standard?) %ENDCOLOR%\n"
+"---+ $site Error\n%RED%$! $@ \n (http://$site ($twiki_users) WebHome not standard?) %ENDCOLOR%\n"
     ) if ($@);
 }
 
@@ -281,8 +278,8 @@ sub get_version {
     my $version;
     foreach $line (@content) {
         next
-          unless $line =~ m!This site is running TWiki version <strong>(.*)</str
-ong>!;
+          unless $line =~
+          m!This site is running TWiki version <strong>(.*)</strong>!;
 
         #     print $line;
         $version = $1;
@@ -347,82 +344,76 @@ sub get_wikiweblist {
     while ( $webline =~ /href\s*=\s*\"([^\"]+)\"/gi ) {
         ( my $web_url = $1 ) =~ s|/edit/|/view/|;
         my $web = $web_url;
-        $web =~ s!(.+?)\?.*!$1!;   # remove url parameters (after ?) not that it
-        's really needed...?
-    $web =~ s!.*/(.*?)/(.*)!$1!;   # take only the webname (NB. WebHome should b
-e $2 here;
-#    $web_url = "http://$site_url/$web_url" unless $web_url =~ /:/;
-    push @webs, $web;
-  }
+        $web =~ s!(.+?)\?.*!$1!
+          ;    # remove url parameters (after ?) not that it's really needed...?
+        $web =~ s!.*/(.*?)/(.*)!$1!
+          ;    # take only the webname (NB. WebHome should be $2 here;
 
-  # local $, = ', '; print @ans;       # change default string to print between 
-list elements
-  # print "@ans";                      # or, prints spaces between 
-  # print map { "[$_] " } @web_urls;   # or, this is handy, too (i like surround
-ing the variables with []'s)
+        #    $web_url = "http://$site_url/$web_url" unless $web_url =~ /:/;
+        push @webs, $web;
+    }
 
-  return @webs;
+# local $, = ', '; print @ans;       # change default string to print between list elements
+# print "@ans";                      # or, prints spaces between
+# print map { "[$_] " } @web_urls;   # or, this is handy, too (i like surrounding the variables with []'s)
+
+    return @webs;
 }
 
 sub get_webstatistics {
-  my ($baseurl, $web) = @_;
+    my ( $baseurl, $web ) = @_;
 
+    my $url = $baseurl . "$web/WebStatistics";
 
-  my $url = $baseurl."$web/WebStatistics";
+    #  print "$url\n";
+    my @content = ( split /\n/, rawget($url) );
 
-#  print "$url\n";
-  my @content = (split /\n/, rawget($url) );
+    my $ans;
+    my $line;
+    my $lastmoyr = "";
+    foreach $line (@content) {
+        next unless $line =~ /^\|/;
+        next if $line =~ /statDate/;
 
-        my $ans;
-        my $line;
-        my $lastmoyr = "";
-        foreach $line (@content) {
-              next unless $line =~ /^\|/;
-              next if $line =~ /statDate/;
-
-              #     print $line;
-              my ( $junk, $moyr, $views, $saves, $uploads, $topicviews,
-                  $topicontribs )
-                = s
-plit /\|/, $line;
-     $ans .= "|$moyr|$views|$saves|$uploads|\n";
-     $lastmoyr = $moyr;
-  }
-  $lastmoyr =~ s/\s(.*)/$1/;
-  return ($ans,$lastmoyr);
+        #     print $line;
+        my ( $junk, $moyr, $views, $saves, $uploads, $topicviews,
+            $topicontribs ) = split /\|/, $line;
+        $ans .= "|$moyr|$views|$saves|$uploads|\n";
+        $lastmoyr = $moyr;
+    }
+    $lastmoyr =~ s/\s(.*)/$1/;
+    return ( $ans, $lastmoyr );
 }
 
-
-
 sub get {
- my ($url) = @_;
+    my ($url) = @_;
 
- # Create a user agent object
-  use LWP::UserAgent;
-  my $ua = new LWP::UserAgent;
+    # Create a user agent object
+    use LWP::UserAgent;
+    my $ua = new LWP::UserAgent;
 
-  # Create a request
-  my $req = new HTTP::Request GET => $url;
+    # Create a request
+    my $req = new HTTP::Request GET => $url;
 
-  # Pass request to the user agent and get a response back my $res =
-                $ua->request($req);
+    # Pass request to the user agent and get a response back my $res =
+    $ua->request($req);
 
-              # Check the outcome of the response
-              if ( $res->is_success ) {
+    # Check the outcome of the response
+    if ( $res->is_success ) {
 
-                  #      print $res->content;
-              }
-              else {
-                  print "Couldn't get $url\n";
-                  return ("No results");
-              }
-              return $res->content;
-        }
+        #      print $res->content;
+    }
+    else {
+        print "Couldn't get $url\n";
+        return ("No results");
+    }
+    return $res->content;
+}
 
-        sub rawget {
-              my ($url) = @_;
+sub rawget {
+    my ($url) = @_;
 
-              # print "rawget $url\n";
-              $url .= "?skin=plain&raw=on";
-              return get($url);
-        }
+    # print "rawget $url\n";
+    $url .= "?skin=plain&raw=on";
+    return get($url);
+}
